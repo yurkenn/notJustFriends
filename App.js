@@ -1,18 +1,23 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { FlatList, SafeAreaView, StyleSheet, View } from 'react-native';
+import FeedPost from './src/components/FeedPost';
+import posts from './assets/data/posts.json';
 
 export default function App() {
+  const renderItem = ({ item }) => <FeedPost post={item} />;
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+    <SafeAreaView style={styles.container}>
+      <FlatList data={posts} renderItem={renderItem} />
       <StatusBar style="auto" />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 50,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
