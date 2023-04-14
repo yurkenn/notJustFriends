@@ -4,15 +4,23 @@ import LikeImage from '../../../assets/images/like.png';
 import { Entypo, AntDesign, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import styles from './styles';
 import { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 const FeedPost = ({ post }) => {
+  const navigation = useNavigation();
   const [isLiked, setIsLiked] = useState(false);
+
+  const handleNavigation = () => {
+    navigation.navigate('Profile', { user: post.User.id });
+  };
 
   return (
     <View style={styles.post}>
       {/* Header */}
       <View style={styles.header}>
-        <Image source={{ uri: post.User.image }} style={styles.profileImage} />
+        <Pressable onPress={handleNavigation}>
+          <Image source={{ uri: post.User.image }} style={styles.profileImage} />
+        </Pressable>
         <View>
           <Text style={styles.name}>{post.User.name}</Text>
           <Text style={styles.subtitle}>{post.createdAt}</Text>
