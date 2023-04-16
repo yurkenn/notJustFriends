@@ -1,24 +1,33 @@
+import React, { useEffect, useState } from 'react';
 import { Pressable, Text, FlatList, Image } from 'react-native';
-import React from 'react';
-import posts from '../../../assets/data/posts.json';
+import '@azure/core-asynciterator-polyfill';
 import FeedPost from '../../components/FeedPost';
 import { Entypo } from '@expo/vector-icons';
 import styles from './styles';
+import { DataStore, Predicates, SortDirection } from 'aws-amplify';
+import { Post } from '../../../src/models';
 
 const img = 'https://notjustdev-dummy.s3.us-east-2.amazonaws.com/avatars/user.png';
 
 const FeedScreen = ({ navigation }) => {
-  const renderItem = ({ item }) => <FeedPost post={item} />;
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    const subscription = DataStore.observeQuery(Post, Predicates.ALL, {
+      sort: (s) => s.createdAt(SortDirection.DESCENDING),
+    }).subscribe(({ items }) => setPosts(items));
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const createPost = () => {
-    console.warn('Create Post');
     navigation.navigate('Create Post');
   };
 
   return (
     <FlatList
       data={posts}
-      renderItem={renderItem}
+      renderItem={({ item }) => <FeedPost post={item} />}
       ListHeaderComponent={() => (
         <Pressable onPress={createPost} style={styles.header}>
           <Image source={{ uri: img }} style={styles.profileImage} />

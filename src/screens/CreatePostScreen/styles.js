@@ -5,6 +5,7 @@ export default StyleSheet.create({
     flex: 1,
     width: '100%',
     padding: 10,
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',
@@ -32,6 +33,10 @@ export default StyleSheet.create({
     aspectRatio: 4 / 3,
     resizeMode: 'cover',
     borderRadius: 15,
+    marginVertical: 10,
+  },
+  input: {
+    fontSize: 18,
     marginVertical: 10,
   },
 });

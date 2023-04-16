@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export default StyleSheet.create({
   post: {
     width: '100%',
-    marginVertical: 10,
+    marginVertical: 5,
     backgroundColor: 'white',
   },
   header: {

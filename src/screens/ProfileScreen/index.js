@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import '@azure/core-asynciterator-polyfill';
 import {
   View,
   Text,
@@ -7,6 +9,7 @@ import {
   Dimensions,
   FlatList,
   Pressable,
+  Alert,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import FeedPost from '../../components/FeedPost';
@@ -17,7 +20,9 @@ import {
   Ionicons,
   Entypo,
 } from '@expo/vector-icons';
-import user from '../../../assets/data/user.json';
+import { Auth, DataStore } from 'aws-amplify';
+import { Post, User } from '../../models';
+import { S3Image } from 'aws-amplify-react-native';
 
 const dummy_img = 'https://notjustdev-dummy.s3.us-east-2.amazonaws.com/avatars/user.png';
 const bg = 'https://notjustdev-dummy.s3.us-east-2.amazonaws.com/images/1.jpg';
@@ -28,7 +33,7 @@ const ProfileScreenHeader = ({ user, isMe = false }) => {
   const navigation = useNavigation();
 
   const signOut = async () => {
-    console.warn('Sign out');
+    Auth.signOut();
   };
 
   if (!user) {
@@ -38,7 +43,11 @@ const ProfileScreenHeader = ({ user, isMe = false }) => {
   return (
     <View style={styles.container}>
       <Image source={{ uri: bg }} style={styles.bg} />
-      <Image source={{ uri: user?.image || dummy_img }} style={styles.image} />
+      {user?.image ? (
+        <S3Image imgKey={user.image} style={styles.image} />
+      ) : (
+        <Image source={{ uri: dummy_img }} style={styles.image} />
+      )}
 
       <Text style={styles.name}>{user.name}</Text>
 
@@ -49,7 +58,7 @@ const ProfileScreenHeader = ({ user, isMe = false }) => {
               <AntDesign name="pluscircle" size={16} color="white" />
               <Text style={[styles.buttonText, { color: 'white' }]}>Add to Story</Text>
             </Pressable>
-            <Pressable style={styles.button}>
+            <Pressable onPress={() => navigation.navigate('UpdateScreen')} style={styles.button}>
               <MaterialCommunityIcons name="pencil" size={16} color="black" />
               <Text style={styles.buttonText}>Edit Profile</Text>
             </Pressable>
@@ -78,16 +87,43 @@ const ProfileScreenHeader = ({ user, isMe = false }) => {
   );
 };
 
-const ProfileScreen = () => {
-  const route = useRoute();
+const ProfileScreen = ({ route, navigation }) => {
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
 
-  const id = route?.params?.id;
+  useEffect(() => {
+    const fetchUser = async () => {
+      // auth user different from normal user they have to create a new profile
+      const userData = await Auth.currentAuthenticatedUser();
+      const userId = route.params?.id || userData.attributes.sub;
 
-  console.warn('User: ', route?.params?.id);
+      if (!userId) {
+        return;
+      }
+
+      const isMe = userId === userData.attributes.sub;
+
+      const dbUser = await DataStore.query(User, userId);
+
+      if (!dbUser) {
+        if (isMe) {
+          navigation.navigate('UpdateScreen');
+        } else {
+          Alert.alert('User not found');
+        }
+      } else {
+        setUser(dbUser);
+      }
+
+      await DataStore.query(Post, (p) => p.postUserId('eq', userId)).then(setPosts);
+    };
+
+    fetchUser();
+  }, []);
 
   return (
     <FlatList
-      data={user.posts}
+      data={posts}
       renderItem={({ item }) => <FeedPost post={item} />}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={() => (
